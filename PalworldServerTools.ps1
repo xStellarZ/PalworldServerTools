@@ -694,7 +694,7 @@ Function RCON_ShutdownRestartNotifier {
 	if ($Restart -eq $True){$RestartOrShutDown = "restart"} Else {$RestartOrShutDown = "shutdown"}
 	if ($Null -eq $ShutdownTimer -or $ShutdownTimer -eq ""){$ShutdownTimer = $Config.AutoShutdownTimer}
 	if ($Null -eq $ShutdownMessage -or $ShutdownMessage -eq ""){$shutdownmessage = "Server_is_scheduled_to_$RestartOrShutDown..."}
-	& ($Config.ARRCONPath + "\ARRCON.exe") --host $HostIP --port $RCONPort --pass $RCONPass "Shutdown $ShutdownTimer $ShutdownMessage"
+	& ($Config.ARRCONPath + "\rcon.exe") -a $HostIP --password $RCONPass "Shutdown $ShutdownTimer $ShutdownMessage"
 	$Script:TimeUntilServerReset = [int]$ShutdownTimer
 	WriteLog -info -noconsole "RCON_ShutdownRestartNotifier: "
 	WriteLog -info -nonewline ("Waiting " + ([int]$ShutdownTimer + [int]$Delay) + " seconds for server to $RestartOrShutDown...")
@@ -800,7 +800,7 @@ Function RCON_ShutdownRestartNotifier {
 }
 Function RCON_Broadcast {#RCON
 	param ($BroadCastMessage)
-	$BroadcastResponse = (& ($Config.ARRCONPath + "\ARRCON.exe") --host $HostIP --port $RCONPort --pass $RCONPass "Broadcast $BroadcastMessage")[1]
+	$BroadcastResponse = (& ($Config.ARRCONPath + "\rcon.exe") -a $HostIP --password $RCONPass "Broadcast $BroadcastMessage")[1]
 	WriteLog -success -noconsole "RCON_Broadcast: "
 	WriteLog -success -nonewline "$BroadcastResponse"
 }
@@ -809,7 +809,7 @@ Function RCON_Save {#RCON
 	WriteLog -info -nonewline "Saving..."
 	Do {
 		$SaveAttempts ++
-		$SaveStatus = & ($Config.ARRCONPath + "\ARRCON.exe") --host $HostIP --port $RCONPort --pass $RCONPass Save
+		$SaveStatus = & ($Config.ARRCONPath + "\rcon.exe") -a $HostIP --password $RCONPass Save
 	} Until ($SaveStatus -eq "Complete Save" -or $SaveAttempts -eq 3)
 	if ($SaveStatus -eq "Complete Save"){
 		WriteLog -success -noconsole "RCON_Save: "
@@ -820,7 +820,7 @@ Function RCON_Info {#RCON
 	param ($Info,$Version,$ServerName)
 	try {
 		WriteLog -info -noconsole "RCON_Info: Getting Info data..."
-		$InfoText = & ($Config.ARRCONPath + "\ARRCON.exe") --host $HostIP --port $RCONPort --pass $RCONPass info
+		$InfoText = & ($Config.ARRCONPath + "\rcon.exe") -a $HostIP --password $RCONPass info
 		$InfoText = $InfoText[1]
 		if ($True -eq $ServerName){
 			$pattern = 'Pal Server\[v\d+\.\d+\.\d+\.\d+\] (.+)' #response is "Welcome to Pal Server[v0.1.2.0] SERVER NAME. Filter out the preamble so only SERVER NAME is returned.
@@ -855,7 +855,7 @@ Function RCON_ShowPlayers {#RCON
 	param ($ShowPlayers,$ShowPlayerCount,$ShowPlayerNames,$ShowPlayersNoHeader,$LogPlayers)
 	Try {
 		WriteLog -info -noconsole "RCON_ShowPlayers: Getting showplayers data..."
-		$PlayersOnline = & ($Config.ARRCONPath + "\ARRCON.exe") --host $HostIP --port $RCONPort --pass $RCONPass showplayers
+		$PlayersOnline = & ($Config.ARRCONPath + "\rcon.exe") -a $HostIP --password $RCONPass showplayers
 		$PlayersOnlineObject = ($PlayersOnline  | Select-Object -First ($PlayersOnline.Count - 1)| Select-Object -Skip 1)
 		$PlayersOnlineObject = $PlayersOnlineObject | convertfrom-csv	
 		$PlayersOnlineCount = $PlayersOnline.count -3
@@ -950,7 +950,7 @@ Function RCON_ShowPlayers {#RCON
 Function RCON_DoExit {#RCON
 	WriteLog -warning -noconsole "RCON: "
 	WriteLog -warning -nonewline "Shutting down now..."
-	& ($Config.ARRCONPath + "\ARRCON.exe") --host $HostIP --port $RCONPort --pass $RCONPass DoExit
+	& ($Config.ARRCONPath + "\rcon.exe") -a $HostIP --password $RCONPass DoExit
 	start-sleep -milliseconds 4850 #takes a short time for server to actually close
 }
 Function RCON_KickPlayer {#RCON
@@ -964,7 +964,7 @@ Function RCON_KickPlayer {#RCON
 	if ($Script:ProceedWithKickOrBan -ne $False){
 		WriteLog -warning -noconsole "RCON: "
 		WriteLog -warning -nonewline "Attempting to Kick $($Script:PlayerDetailsObject.name)..."
-		$KickResult = (& ($Config.ARRCONPath + "\ARRCON.exe") --host $HostIP --port $RCONPort --pass $RCONPass "KickPlayer $($Script:PlayerDetailsObject.steamid)") | Select-Object -Skip 1
+		$KickResult = (& ($Config.ARRCONPath + "\rcon.exe") -a $HostIP --password $RCONPass "KickPlayer $($Script:PlayerDetailsObject.steamid)") | Select-Object -Skip 1
 		$KickResult = $KickResult -replace '\x1B\[[0-9;]*[a-zA-Z]', '' #remove any ANSI codes sent back by ARRCON eg [39m[49m[22m[24m[27m
 		if ($KickResult -match "failed to kick") {
 			WriteLog -errorlog -noconsole "RCON_KickPlayer: "
@@ -992,7 +992,7 @@ Function RCON_BanPlayer {#RCON
 		if ($Script:PlayerIsOffline -ne $True){ #ARRCON can only ban players who are online.
 			WriteLog -warning -noconsole "RCON_BanPlayer: "
 			WriteLog -warning -nonewline "Attempting to ban $($Script:PlayerDetailsObject.name)..."
-			$BanResult = (& ($Config.ARRCONPath + "\ARRCON.exe") --host $HostIP --port $RCONPort --pass $RCONPass "BanPlayer $($Script:PlayerDetailsObject.steamid)") | Select-Object -Skip 1
+			$BanResult = (& ($Config.ARRCONPath + "\rcon.exe") -a $HostIP --password $RCONPass "BanPlayer $($Script:PlayerDetailsObject.steamid)") | Select-Object -Skip 1
 			if ($BanResult -match "failed to ban") {
 				WriteLog -warning -noconsole "RCON_BanPlayer: "
 				WriteLog -warning -nonewline "Unable to ban player SteamID:$($Script:PlayerDetailsObject.steamid)"
@@ -1091,44 +1091,7 @@ Function SteamCMDCheck {
 		WriteLog -success -nonewline "SteamCMD installed to $($Config.SteamCMDPath)."
 	}
 }
-Function ARRCONCheck {
-	#Check if ARRCON is installed if not install it.
-	if ($Config.ARRCONPath -eq ""){
-		WriteLog -verbose ("ARRCONCheck: ARRCON not Specified in Config.xml. Setting this to 'C:\Program Files\ARRCON'")
-		$Script:Config.ARRCONPath = "C:\Program Files\ARRCON\"
-	}
-	WriteLog -verbose ("ARRCONCheck: Checking if ARRCON.exe can be found in '" + $Config.ARRCONPath +"'")
-	if (-not (Test-Path ($Config.ARRCONPath + "\ARRCON.exe"))){
-		if (-not (Test-Path $Config.SteamCMDPath)){
-			WriteLog -info -noconsole "ARRCONCheck: "
-			WriteLog -info -nonewline "Creating ARRCON folder in $($Config.ARRCONPath)"
-			New-Item -ItemType Directory -Path $Config.ARRCONPath -ErrorAction stop | Out-Null 
-		}
-		$ARRCONReleases = Invoke-RestMethod -Uri "https://api.github.com/repos/radj307/ARRCON/releases"
-		$ARRCONReleaseInfo = ($ARRCONReleases | Sort-Object id -desc)[0] #find release with the highest ID.
-		$ARRCONDownloadURL = $ARRCONReleaseinfo.assets.browser_download_url | where-object {$_ -like "*windows*"}
-		Invoke-WebRequest -Uri $ARRCONDownloadURL -OutFile "$($Config.ARRCONPath)\ARRCON-$($ReleaseInfo.Tag_name)-Windows.zip"
-		Expand-Archive -Path "$($Config.ARRCONPath)\ARRCON-$($ReleaseInfo.Tag_name)-Windows.zip" -DestinationPath $Config.ARRCONPath -Force
-		start-sleep 5 #give a tiny bit of time to remove file lock from zip.
-		Remove-Item -Path "$($Config.ARRCONPath)\ARRCON-$($ReleaseInfo.Tag_name)-Windows.zip"
-		WriteLog -success -noconsole "ARRCONCheck: ARRCON installed"
-	}
-	Else {
-		WriteLog -Success -noconsole "ARRCONCheck: ARRCON already installed"
-	}
-	if ((Test-Path -Path ($Config.ARRCONPath + "\ARRCON.exe")) -ne $true){
-		WriteLog -errorlog -noconsole "ARRCONCheck: "
-		WriteLog -errorlog -nonewline "ARRCON was not found in the specified path in config.xml."
-		WriteLog -errorlog -noconsole "ARRCONCheck: "
-		WriteLog -errorlog -nonewline "ERROR: Please ensure you have downloaded ARRCON.exe and specified the correct folder in config.xml."
-		WriteLog -errorlog -nonewline "ARRCON.exe can be downloaded from https://github.com/radj307/ARRCON"
-		Pause
-		ExitCheck
-	}
-	Else {
-		WriteLog -Success -noconsole "ARRCONCheck: ARRCON.exe was found in the specified path in config.xml."
-	}
-}
+
 Function Menu {
 	WriteLog -warning -noconsole "Menu: "
 	WriteLog -warning -nonewline "No launch parameters provided."
@@ -1184,7 +1147,7 @@ Else {
 }
 ImportXML
 SteamCMDCheck
-ARRCONCheck
+
 if ($Null -ne $Kick -and $Kick -ne ""){$KickPlayer = $Kick} #allow users to use -kick to save keypresses.
 if ($Null -ne $Ban -and $Ban -ne ""){$BanPlayer = $Ban} #allow users to use -ban to save keypresses.
 if ($Null -ne $Config.AutoShutdownMessage){#remove this config option as arguments are now stored in accounts.csv so that different arguments can be set for each account
